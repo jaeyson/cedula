@@ -111,10 +111,11 @@ jobs:
         run: php artisan migrate
 
       - name: Execute tests
-        run: vendor/bin/phpunit --coverage-html reports/
+        run: php artisan test --coverage --coverage-clover storage/coverage/coverage.xml
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./storage/coverage/coverage.xml
           verbose: true
