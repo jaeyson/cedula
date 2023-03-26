@@ -68,8 +68,8 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql, php-xdebug
-          coverage: none
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql
+          coverage: xdebug
 
       - name: Install Composer Dependencies
         if: steps.npm-composer.outputs.cache-hit != 'true'
@@ -110,8 +110,8 @@ jobs:
       - name: migrate
         run: php artisan migrate
 
-      - name: Execute tests
-        run: php artisan test --coverage --coverage-clover storage/coverage/coverage.xml
+      - name: Run tests and collect coverage
+        run: vendor/bin/phpunit --coverage-clover coverage.xml .
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
