@@ -111,7 +111,7 @@ jobs:
         run: php artisan migrate
 
       - name: Execute tests
-        run: vendor/bin/phpunit
+        run: vendor/bin/phpunit --coverage-html reports/
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
