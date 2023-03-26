@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+  pull_request:
+    branches:
+      - main
+      - staging
+
+permissions:
+  contents: read
+
+jobs:
+  check-commit-message:
+    name: Check commit message for skipping build(s)
+    runs-on: ubuntu-latest
+    # skips CI and prints cli message, without fail build badge
+    if: "contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - name: print message via cli
+        run: echo "no need to build, based from commit message"
+
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        php: [8.1, 8.2]
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: testing
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v3
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: |
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: cache composer
+        id: cache-composer # use this to check for `cache-hit` ==> if: steps.npm-composer.outputs.cache-hit != 'true'
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+                  - name: Setup PHP
+
+      - name: setup php runtime
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql
+          coverage: none
+
+      - name: Install Composer Dependencies
+        if: steps.npm-composer.outputs.cache-hit != 'true'
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Copy environment file
+        run: cp .env.ci .env
+
+      - name: Generate app key
+        run: php artisan key:generate
+
+      - name: setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Get npm cache directory
+        id: npm-cache-dir
+        shell: bash
+        run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
+
+      - name: cache node modules
+        uses: actions/cache@v3
+        id: npm-cache # use this to check for `cache-hit` ==> if: steps.npm-cache.outputs.cache-hit != 'true'
+        with:
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: install node dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: |
+          npm install
+          npm run build
+
+      - name: migrate
+        run: php artisan migrate
+
+      - name: Execute tests
+        run: vendor/bin/phpunit
