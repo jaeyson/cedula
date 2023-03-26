@@ -84,7 +84,7 @@ jobs:
       - name: setup node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 16
 
       - name: Get npm cache directory
         id: npm-cache-dir
@@ -104,6 +104,7 @@ jobs:
         if: steps.npm-cache.outputs.cache-hit != 'true'
         run: |
           npm install
+          npm run dev
           npm run build
 
       - name: migrate
@@ -111,3 +112,6 @@ jobs:
 
       - name: Execute tests
         run: vendor/bin/phpunit
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
