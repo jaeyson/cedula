@@ -71,6 +71,9 @@ jobs:
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql
           coverage: none
 
+      - name: install xdebug
+        run: sudo apt install php-xdebug
+
       - name: Install Composer Dependencies
         if: steps.npm-composer.outputs.cache-hit != 'true'
         run: composer install --no-interaction --no-progress --prefer-dist
