@@ -55,6 +55,7 @@ jobs:
           echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
       - name: cache composer
+        id: cache-composer # use this to check for `cache-hit` ==> if: steps.npm-composer.outputs.cache-hit != 'true'
         uses: actions/cache@v3
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
@@ -70,8 +71,8 @@ jobs:
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql
           coverage: none
 
-      - name: Install Dependencies
-        if: steps.vendor-cache.outputs.cache-hit != 'true'
+      - name: Install Composer Dependencies
+        if: steps.npm-composer.outputs.cache-hit != 'true'
         run: composer install --no-interaction --no-progress --prefer-dist
 
       - name: Copy environment file
@@ -79,6 +80,34 @@ jobs:
 
       - name: Generate app key
         run: php artisan key:generate
+
+      - name: setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Get npm cache directory
+        id: npm-cache-dir
+        shell: bash
+        run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
+
+      - name: cache node modules
+        uses: actions/cache@v3
+        id: npm-cache # use this to check for `cache-hit` ==> if: steps.npm-cache.outputs.cache-hit != 'true'
+        with:
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: install node dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: |
+          npm install
+          npm run build
+
+      - name: migrate
+        run: php artisan migrate
 
       - name: Execute tests
         run: vendor/bin/phpunit
