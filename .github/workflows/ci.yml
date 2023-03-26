@@ -68,11 +68,8 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql, php-xdebug
           coverage: none
-
-      - name: install xdebug
-        run: sudo apt install php-xdebug
 
       - name: Install Composer Dependencies
         if: steps.npm-composer.outputs.cache-hit != 'true'
