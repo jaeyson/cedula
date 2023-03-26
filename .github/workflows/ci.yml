@@ -104,6 +104,7 @@ jobs:
         if: steps.npm-cache.outputs.cache-hit != 'true'
         run: |
           npm install
+          npm run dev
           npm run build
 
       - name: migrate
