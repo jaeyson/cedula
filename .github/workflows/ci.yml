@@ -36,7 +36,7 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
-          MYSQL_DATABASE: cedula
+          MYSQL_DATABASE: testing
         ports:
           - 3306:3306
         options: >-
