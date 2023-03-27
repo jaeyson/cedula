@@ -113,6 +113,8 @@ jobs:
           # REDIS_PORT: ${{ job.services.redis.ports['6379'] }}
 
       - name: Run tests and collect coverage
+        env:
+          APP_ENV: "testing"
         run: php artisan test --coverage --coverage-clover storage/coverage/coverage.xml
 
       - name: Upload coverage reports to Codecov
