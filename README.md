@@ -2,8 +2,6 @@
 
 ## Online processing for Cedula document
 
-[![codecov]()]()
-
 [//]: # "Badges"
 [![Commit activity][pulse-badge]](https://github.com/jaeyson/cedula/pulse)
 [![Test code coverage][coverage-badge]](https://codecov.io/gh/jaeyson/cedula)
