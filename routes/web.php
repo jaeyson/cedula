@@ -26,3 +26,7 @@ Route::middleware([
         return view('dashboard');
     })->name('dashboard');
 });
+
+Route::get('/debug-sentry', function () {
+    throw new Exception('Look, a Sentry error!');
+});
