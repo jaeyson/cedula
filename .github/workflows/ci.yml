@@ -49,6 +49,13 @@ jobs:
       - name: checkout repo
         uses: actions/checkout@v3
 
+      - name: setup php runtime
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql, mysql, fileinfo
+          coverage: xdebug
+
       - name: Get Composer Cache Directory
         id: composer-cache
         run: |
@@ -60,26 +67,19 @@ jobs:
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-composer-
-                  - name: Setup PHP
-
-      - name: setup php runtime
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql
-          coverage: xdebug
+          restore-keys: ${{ runner.os }}-composer-
 
       - name: Install Composer Dependencies
         if: steps.npm-composer.outputs.cache-hit != 'true'
         run: composer install --no-interaction --no-progress --prefer-dist
 
-      - name: Copy environment file
-        run: cp .env.ci .env
+      - name: Prepare application
+        run: |
+          php -r "file_exists('.env') || copy('.env.ci', '.env');"
+          php artisan key:generate
 
-      - name: Generate app key
-        run: php artisan key:generate
+      - name: Clear Config
+        run: php artisan config:clear
 
       - name: setup node
         uses: actions/setup-node@v3
@@ -108,7 +108,10 @@ jobs:
           npm run build
 
       - name: migrate
-        run: php artisan migrate
+        run: php artisan migrate -v
+        env:
+          DB_PORT: ${{ job.services.mysql.ports['3306'] }}
+          # REDIS_PORT: ${{ job.services.redis.ports['6379'] }}
 
       - name: Run tests and collect coverage
         run: vendor/bin/phpunit --coverage-clover coverage.xml .
