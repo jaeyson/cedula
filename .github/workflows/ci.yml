@@ -102,11 +102,8 @@ jobs:
 
       - name: install node dependencies
         if: steps.npm-cache.outputs.cache-hit != 'true'
-        env:
-          LARAVEL_BYPASS_ENV_CHECK: 1
         run: |
           npm install
-          npm run dev
           npm run build
 
       - name: migrate
